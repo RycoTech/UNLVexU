@@ -1,0 +1,33 @@
+Pseudo code ( autonomous)
+
+reverse until
+load code onto score post
+foward until line encountered
+left 90 dregree
+foward until line encountered
+left 90 degrees
+foward until … (follow line)
+left 45 degrees
+prepare lower goal
+foward until goal
+load goal
+reverse until 2nd line
+prepare upper goal
+left 135
+foward until… (follow line )
+right 45 degrees
+foward until goal….
+right 45 degrees
+foward until goal
+load goal
+secure goal
+reverse until line
+right 90 degees
+reverse until
+load cones *4 to lower goal
+foward until
+right 90 degrees
+foward until centereed ( follow line)
+right 90 degrees
+deliver both
+reverse until line.
