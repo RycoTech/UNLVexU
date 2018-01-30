@@ -3,7 +3,7 @@
 *
 */
 
-#define radius
+#define radius REPLACE_THIS_HOLDER_WITH_A_NUMBER
 #define circumference = radius *2 * PI;
 /*
 *This function set the speed of the 2 motorB
