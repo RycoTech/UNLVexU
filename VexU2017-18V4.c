@@ -11,10 +11,9 @@
 #pragma config(Sensor, dgtl3,  coneLock,       sensorDigitalOut)
 #pragma config(Sensor, dgtl4,  mobleGoalLower, sensorTouch)
 #pragma config(Sensor, dgtl5,  mobleGoalHigher, sensorTouch)
-#pragma config(Sensor, I2C_1,  liftLowerRight, sensorQuadEncoderOnI2CPort,    , AutoAssign )
-#pragma config(Sensor, I2C_2,  liftLowerLeft,  sensorQuadEncoderOnI2CPort,    , AutoAssign )
-#pragma config(Sensor, I2C_3,  leftDrive,      sensorNone)
-#pragma config(Sensor, I2C_4,  rightDrive,     sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_2,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_4,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,            ,             tmotorVex393HighSpeed_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           driveTrainRight, tmotorVex393HighSpeed_MC29, openLoop, reversed, encoderPort, I2C_1)
 #pragma config(Motor,  port3,           liftMobileLowerRight, tmotorVex393HighSpeed_MC29, openLoop, reversed, encoderPort, I2C_4)
@@ -77,11 +76,10 @@ void pre_auton()
 	// All activities that occur before the competition starts
 	// Example: clearing encoders, setting servo positions, ...
 
-
-
-
-
-
+	resetMotorEncoder(driveTrainLeft);
+	resetMotorEncoder(driveTrainRight);
+	resetMotorEncoder(liftMobileLowerLeft);
+	resetMotorEncoder(liftMobileLowerRight);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -118,29 +116,24 @@ task autonomous()
 task usercontrol()
 {
 
-bLCDBacklight = true;                                    // Turn on LCD Backlight
-string mainBattery, backupBattery;
+
+//logic variables
+SensorValue[extendLeft] = 1;
+SensorValue[extendRight] = 1;
+
+
+bool coneGate = false;
+bool mobileForward = true;
+int highLiftPosition = 1;
+
+
+
+
+
 	// User control code here, inside the loop
-	bool mobileForward = true;
 
 	while (true)
 	{
-
-	clearLCDLine(0);                                            // Clear line 1 (0) of the LCD
-	clearLCDLine(1);                                            // Clear line 2 (1) of the LCD
-
-	//Display the Primary Robot battery voltage
-	displayLCDString(0, 0, "Primary: ");
-	sprintf(mainBattery, "%1.2f%c", nImmediateBatteryLevel/1000.0,'V'); //Build the value to be displayed
-	displayNextLCDString(mainBattery);
-
-	//Display the Backup battery voltage
-	displayLCDString(1, 0, "Backup: ");
-	sprintf(backupBattery, "%1.2f%c", BackupBatteryLevel/1000.0, 'V');    //Build the value to be displayed
-	displayNextLCDString(backupBattery);
-
-	//Short delay for the LCD refresh rate
-	wait1Msec(100);
 
 		/*
 		Drive
@@ -154,23 +147,22 @@ string mainBattery, backupBattery;
 
 				motor[port8] = -(vexRT[Ch2]);
 				motor[port2] = -(vexRT[Ch3]);
-
 		}
 
 
 
 
-		if(vexRT[Btn8U] == 1){
+		if(vexRT[Btn7R] == 1 && mobileForward == true){
 			mobileForward = false;
 		}
-		else if(vexRT[Btn8D] == 1){
+		else if(vexRT[Btn7R] == 1 && mobileForward == false){
 			mobileForward = true;
 		}
 
 
 
 		//low lift
-		if(vexRT[Btn5U] && mobileForward == true){
+		if(vexRT[Btn8U]){
 				//goes up
 
 			motor[liftMobileLowerLeft] = 127;
@@ -183,7 +175,7 @@ string mainBattery, backupBattery;
     	moveMotorTarget(liftMobileLowerRight, nEncoderCountTarget, 127, true);
     	*/
 
-			}else if(vexRT[Btn5D] && mobileForward == true){
+			}else if(vexRT[Btn8R]){
 				//goes down
 
 				motor[liftMobileLowerLeft] = -127;
@@ -206,52 +198,49 @@ string mainBattery, backupBattery;
 
 
 		//High lift  (NEEDS SENSOR VALUES)
-		if(vexRT[Btn6U] && mobileForward == true){
+		if(vexRT[Btn7U]){
 			//goes up
 			motor[liftMobileHigherLeft] = 127;
 			motor[liftMobileHigherRight] = 127;
-			}else if(vexRT[Btn6D] && mobileForward == true){
+			highLiftPosition = 3;
+
+			//
+			//}else if(vexRT[Btn7L]){
+			//motor[liftMobileHigherLeft] = 127;
+			//motor[liftMobileHigherRight] = 127;
+			highLiftPosition = 2;
+			//}
+			}else if(vexRT[Btn7D]){
 			//goes down
 			motor[liftMobileHigherLeft] = -127;
 			motor[liftMobileHigherRight] = -127;
-			}else if (mobileForward == true){
+			}else {
 			motor[liftMobileHigherLeft] = 0;
 			motor[liftMobileHigherRight] = 0;
+			highLiftPosition = 1;
 		}
 
 
 
 
-
-
-		//Pneumatic Lift Systems
-		if(vexRT[Btn7U] == 1){
-			//Activates Mobile Lift Pneumatics
-			SensorValue[extendLeft] = 1;
-			SensorValue[extendRight] = 1;
-		}
-		else if(vexRT[Btn7D] == 1){
-			//Deactivates Mobile Lift Pneumatics
-				SensorValue[extendLeft] = 0;
-			SensorValue[extendRight] = 0;
-		}
-
-		if(vexRT[Btn7L] == 1){
+		if(vexRT[Btn8D] == 1 && coneGate == false){
 			//Activates Cone Lift Pneumatics
-			SensorValue[coneLock] = 0;
-		}
-		else if(vexRT[Btn7R] == 1){
-			//Deactivates Cone Lift Pneumatics
 			SensorValue[coneLock] = 1;
+			coneGate = true;
+		}
+		else if(vexRT[Btn8D] == 1 && coneGate == true){
+			//Deactivates Cone Lift Pneumatics
+			SensorValue[coneLock] = 0;
+			coneGate = false;
 		}
 
 		//Cone lift
 
-		if(vexRT[Btn5D] && mobileForward == false){
+		if(vexRT[Btn5D]){
 			motor[liftConeLeft] = 127;
 			motor[liftConeRight] = 127;
 
-		}else if(vexRT[Btn5U] && mobileForward == false){
+		}else if(vexRT[Btn5U]){
 			motor[liftConeLeft]  = -127;
 			motor[liftConeRight] = -127;
 		}else{
@@ -261,12 +250,12 @@ string mainBattery, backupBattery;
 
 		//cone intake
 
-		if(vexRT[Btn6U] && mobileForward == false){
+		if(vexRT[Btn6U]){
 			motor[coneIntake] = 127;
 
-		}else if(vexRT[Btn6D] && mobileForward == false){
+		}else if(vexRT[Btn6D]){
 			motor[coneIntake]  = -127;
-		}else if(mobileForward == false){
+		}else{
 			motor[coneIntake]  = 0;
 		}
 	}
