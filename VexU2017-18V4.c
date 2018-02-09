@@ -3,12 +3,12 @@
 #pragma config(Sensor, in2,    coneAngleLeft,  sensorPotentiometer)
 #pragma config(Sensor, in3,    coneAngleRight, sensorPotentiometer)
 #pragma config(Sensor, in4,    liftAngleLeft,  sensorPotentiometer)
-#pragma config(Sensor, in5,    lineLeft,       sensorNone)
-#pragma config(Sensor, in6,    lineRight,      sensorNone)
-#pragma config(Sensor, in7,    lineBack,       sensorNone)
+#pragma config(Sensor, in5,    frontLeftLine,  sensorLineFollower)
+#pragma config(Sensor, in6,    backRightLine,  sensorLineFollower)
+#pragma config(Sensor, in7,    frontRightLine, sensorLineFollower)
 #pragma config(Sensor, dgtl1,  extendLeft,     sensorDigitalOut)
 #pragma config(Sensor, dgtl2,  extendRight,    sensorDigitalOut)
-#pragma config(Sensor, dgtl3,  coneLock,       sensorDigitalOut)
+#pragma config(Sensor, dgtl3,  coneGate,       sensorDigitalOut)
 #pragma config(Sensor, dgtl4,  mobleGoalLower, sensorTouch)
 #pragma config(Sensor, dgtl5,  mobleGoalHigher, sensorTouch)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
@@ -48,6 +48,28 @@
 //Main competition background code...do not modify!
 #include "Vex_Competition_Includes.c"
 
+const short leftButton = 1;
+const short centerButton = 2;
+const short rightButton = 4;
+int autonomousModeSelect = 0;
+
+
+//Wait for Press--------------------------------------------------
+void waitForPress()
+{
+  while(nLCDButtons == 0){}
+  wait1Msec(5);
+}
+//----------------------------------------------------------------
+
+//Wait for Release------------------------------------------------
+void waitForRelease()
+{
+  while(nLCDButtons != 0){}
+  wait1Msec(5);
+}
+//----------------------------------------------------------------
+
 
 //bool mobileLowerIfTrue = true;
 
@@ -71,15 +93,98 @@ void pre_auton()
 	// Set bDisplayCompetitionStatusOnLcd to false if you don't want the LCD
 	// used by the competition include file, for example, you might want
 	// to display your team name on the LCD in this function.
-	// bDisplayCompetitionStatusOnLcd = false;
+		bDisplayCompetitionStatusOnLcd = false;
+	while(bIfiRobotDisabled){
+		//Clear LCD
+  clearLCDLine(0);
+  clearLCDLine(1);
+  //Declare count variable to keep track of our choice
+  int count = 0;
+  //Loop while center button is not pressed
+  while(nLCDButtons != centerButton)
+  {
+    //Switch case that allows the user to choose from 4 different options
+    switch(count){
+    case 0:
+      //Display first choice
+      displayLCDCenteredString(0, "Autonomous 1");
+      displayLCDCenteredString(1, "<     Enter    >");
+      waitForPress();
+      //Increment or decrement "count" based on button press
+      if(nLCDButtons == leftButton)
+      {
+        waitForRelease();
+        count = 3;
+      }
+      else if(nLCDButtons == rightButton)
+      {
+        waitForRelease();
+        count++;
+      }
+      break;
+    case 1:
+      //Display second choice
+      displayLCDCenteredString(0, "Autonomous 2");
+      displayLCDCenteredString(1, "<     Enter    >");
+      waitForPress();
+      //Increment or decrement "count" based on button press
+      if(nLCDButtons == leftButton)
+      {
+        waitForRelease();
+        count--;
+      }
+      else if(nLCDButtons == rightButton)
+      {
+        waitForRelease();
+        count++;
+      }
+      break;
+    default:
+      count = 0;
+      break;
+    }
+  }
+  //Clear LCD
+  clearLCDLine(0);
+  clearLCDLine(1);
+
+	 //Switch Case that actually runs the user choice
+  switch(count){
+  case 0:
+    //If count = 0, run the code correspoinding with choice 1
+    displayLCDCenteredString(0, "Autonomous 1");
+    displayLCDCenteredString(1, "Selected!");
+    wait1Msec(2000);                  // Robot waits for 2000 milliseconds
+
+    //give user choice to th auton task
+
+    autonomousModeSelect = 0;
+
+    break;
+  case 1:
+    //If count = 1, run the code correspoinding with choice 2
+    displayLCDCenteredString(0, "Autonomous 2");
+    displayLCDCenteredString(1, "Selected!");
+    wait1Msec(2000);                  // Robot waits for 2000 milliseconds
+
+    //give user choice to the auton task
+
+   	autonomousModeSelect = 1;
+
+    wait1Msec(3000);                 // Robot runs previous code for 3000 milliseconds before moving on
+    break;
+  default:
+    displayLCDCenteredString(0, "No valid choice");
+    displayLCDCenteredString(1, "was made!");
+    break;
+  }
 
 	// All activities that occur before the competition starts
 	// Example: clearing encoders, setting servo positions, ...
 
 	resetMotorEncoder(driveTrainLeft);
 	resetMotorEncoder(driveTrainRight);
-	resetMotorEncoder(liftMobileLowerLeft);
-	resetMotorEncoder(liftMobileLowerRight);
+}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -94,14 +199,23 @@ void pre_auton()
 
 task autonomous()
 {
-	// ..........................................................................
-	// Insert user code here.
-	// ..........................................................................
 
-	// Remove this function call once you have "real" code.
-	AutonomousCodePlaceholderForTesting();
+	//motor[port8] = 127;
+	//motor[port2] = 127;
+
+	waitUntil(SensorValue[mobleGoalHigher] == 1);
+	motor[port8] = 0;
+	motor[port2] = 0;
+	motor[liftMobileHigherLeft] = 127;
+	motor[liftMobileHigherRight] = 127;
+	wait(500);
+	motor[liftMobileHigherLeft] = 0;
+	motor[liftMobileHigherRight] = 0;
+	allMotorsOff();
+
+
+
 }
-
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -225,12 +339,12 @@ int highLiftPosition = 1;
 
 		if(vexRT[Btn8D] == 1 && coneGate == false){
 			//Activates Cone Lift Pneumatics
-			SensorValue[coneLock] = 1;
+			SensorValue[coneGate] = 1;
 			coneGate = true;
 		}
 		else if(vexRT[Btn8D] == 1 && coneGate == true){
 			//Deactivates Cone Lift Pneumatics
-			SensorValue[coneLock] = 0;
+			SensorValue[coneGate] = 0;
 			coneGate = false;
 		}
 
