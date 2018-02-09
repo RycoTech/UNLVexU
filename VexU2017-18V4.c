@@ -312,27 +312,51 @@ int highLiftPosition = 1;
 
 
 		//High lift  (NEEDS SENSOR VALUES)
-		if(vexRT[Btn7U]){
+		if(vexRT[Btn7U]){ //Hight state
 			//goes up
 			motor[liftMobileHigherLeft] = 127;
 			motor[liftMobileHigherRight] = 127;
 			highLiftPosition = 3;
+			if(SensorValue[liftAngleLeft] > 4095){
+				motor[liftMobileHigherLeft] = 0;
+			}
+			if(SensorValue[liftAngleRight] < 910){
+				motor[liftMobileHigherRight] = 0;
+			}
 
-			//
-			//}else if(vexRT[Btn7L]){
-			//motor[liftMobileHigherLeft] = 127;
-			//motor[liftMobileHigherRight] = 127;
-			highLiftPosition = 2;
-			//}
+
+			}else if(vexRT[Btn7L] && highLiftPosition == 3){ //middle state going down
+				motor[liftMobileHigherLeft] = -127;
+				motor[liftMobileHigherRight] = -127;
+				highLiftPosition = 2;
+				if(SensorValue[liftAngleLeft] < 3743){
+					motor[liftMobileHigherLeft] = 0;
+				}
+				if(SensorValue[liftAngleRight] > 1955){
+					motor[liftMobileHigherRight] = 0;
+				}
+			}else if(vexRT[Btn7L] && highLiftPosition == 1){ //middle state going up
+				motor[liftMobileHigherLeft] = 127;
+				motor[liftMobileHigherRight] = 127;
+				highLiftPosition = 2;
+				if(SensorValue[liftAngleLeft] > 3743){
+					motor[liftMobileHigherLeft] = 0;
+				}
+				if(SensorValue[liftAngleRight] < 1955){
+					motor[liftMobileHigherRight] = 0;
+				}
 			}else if(vexRT[Btn7D]){
-			//goes down
-			motor[liftMobileHigherLeft] = -127;
-			motor[liftMobileHigherRight] = -127;
-			}else {
-			motor[liftMobileHigherLeft] = 0;
-			motor[liftMobileHigherRight] = 0;
-			highLiftPosition = 1;
-		}
+				//goes down
+				motor[liftMobileHigherLeft] = -127;
+				motor[liftMobileHigherRight] = -127;
+				highLiftPosition = 1;
+				if(SensorValue[liftAngleLeft] < 2770){
+					motor[liftMobileHigherLeft] = 0;
+				}
+				if(SensorValue[liftAngleRight] > 2820){
+					motor[liftMobileHigherRight] = 0;
+				}
+			}
 
 
 
