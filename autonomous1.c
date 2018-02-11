@@ -54,28 +54,21 @@ void autonomous1(){
 		stopTask(lineRightTest);
 
 		//45 degree turn left
-		motor[driveTrainLeft] = -127;
-		motor[driveTrainRight] = 127;
 		//(left target, right target)
-		setEncoders(150, -150);
+		turnLeft(150, -150);
 		wait(100);
 
 			//go forward
-		motor[driveTrainLeft] = 127;
-		motor[driveTrainRight] = 127;
-		setEncoders(-500, -500);
+
+		strait(-500, -500);
 		wait(100);
 
 			//45 degree turn right
-		motor[driveTrainLeft] = 127;
-		motor[driveTrainRight] = -127;
-		setEncoders(-200, 200);
+		turnRight(-200, 200);
 		wait(100);
 
 			//go forward
-		motor[driveTrainLeft] = 127;
-		motor[driveTrainRight] = 127;
-		setEncoders(-100,-100);
+		strait(-100,-100);
 		wait(100);
 
 }

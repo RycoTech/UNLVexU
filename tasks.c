@@ -28,32 +28,115 @@ task lineRightTest(){
 	}
 }
 
-task rightEncoderTest(){
+task rightForwardEncoderTest(){
 
-	waitUntil(SensorValue[rightEncoder] == rightEncoderTarget);
+	waitUntil(SensorValue[rightEncoder] < rightEncoderTarget);
+	motor[driveTrainRight] = 0;
+	rightEncoderReached = true;
+}
+
+task rightBackwardEncoderTest(){
+
+	waitUntil(SensorValue[rightEncoder] > rightEncoderTarget);
 	motor[driveTrainRight] = 0;
 	rightEncoderReached = true;
 }
 
 
-task leftEncoderTest(){
+task leftForwardEncoderTest(){
 
-	waitUntil(SensorValue[leftEncoder] == leftEncoderTarget);
+	waitUntil(SensorValue[leftEncoder] < leftEncoderTarget);
 	motor[driveTrainLeft] = 0;
 	leftEncoderReched = true;
 }
 
-void setEncoders(int leftTarget, int rightTarget){
+task leftBackwardEncoderTest(){
+
+	waitUntil(SensorValue[leftEncoder] > leftEncoderTarget);
+	motor[driveTrainLeft] = 0;
+	leftEncoderReched = true;
+}
+
+
+
+void turnLeft(int leftTarget, int rightTarget){
+		//reset encoder results flag
 		bool rightEncoderReached = false;
 		bool leftEncoderReched = false;
+
+		//reset encoders
 		SensorValue[leftEncoder] = 0;
 		SensorValue[rightEncoder] = 0;
+
+		//set encoder targets
 		rightEncoderTarget = rightTarget;
 		leftEncoderTarget = leftTarget;
-		startTask(rightEncoderTest);
-		startTask(leftEncoderTest);
+
+		//set motors in the proper direction
+		motor[driveTrainLeft] = -127;
+		motor[driveTrainRight] = 127;
+
+
+		//startEncoders for testing
+		startTask(rightBackwardEncoderTest);
+		startTask(leftForwardEncoderTest);
+
+		//when the encoders return the results, then stop the tasks, and end the function
 		waitUntil(rightEncoderReached == true && leftEncoderReched == true);
-		stopTask(rightEncoderTest);
-		stopTask(leftEncoderTest);
+		stopTask(rightBackwardEncoderTest);
+		stopTask(leftForwardEncoderTest);
+		return;
+}
+
+void turnRight(int leftTarget, int rightTarget){
+
+		//reset encoder results
+		bool rightEncoderReached = false;
+		bool leftEncoderReched = false;
+
+		//reset encoder values
+		SensorValue[leftEncoder] = 0;
+		SensorValue[rightEncoder] = 0;
+
+		//set encoder targets
+		rightEncoderTarget = rightTarget;
+		leftEncoderTarget = leftTarget;
+
+		//set motors in proper direction
+		motor[driveTrainLeft] = 127;
+		motor[driveTrainRight] = -127;
+
+		//when the encoders return the results, then stop the tasks, and end the function
+		startTask(rightForwardEncoderTest);
+		startTask(leftBackwardEncoderTest);
+		waitUntil(rightEncoderReached == true && leftEncoderReched == true);
+		stopTask(rightForwardEncoderTest);
+		stopTask(leftBackwardEncoderTest);
+		return;
+}
+
+void strait(int leftTarget, int rightTarget){
+		//reset encoder results
+		bool rightEncoderReached = false;
+		bool leftEncoderReched = false;
+
+		//reset encoder values
+		SensorValue[leftEncoder] = 0;
+		SensorValue[rightEncoder] = 0;
+
+		//set encoder targets
+		rightEncoderTarget = rightTarget;
+		leftEncoderTarget = leftTarget;
+
+		//set motors in proper direction
+		motor[driveTrainLeft] = 127;
+		motor[driveTrainRight] = 127;
+
+		//when the encoders return the results, then stop the tasks, and end the function
+		startTask(rightForwardEncoderTest);
+		startTask(leftForwardEncoderTest);
+		waitUntil(rightEncoderReached == true && leftEncoderReched == true);
+		stopTask(rightForwardEncoderTest);
+		stopTask(leftForwardEncoderTest);
 		return;
 }
