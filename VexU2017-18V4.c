@@ -11,6 +11,9 @@
 #pragma config(Sensor, dgtl3,  coneGate,       sensorDigitalOut)
 #pragma config(Sensor, dgtl4,  mobleGoalLower, sensorTouch)
 #pragma config(Sensor, dgtl5,  mobleGoalHigher, sensorTouch)
+#pragma config(Sensor, dgtl6,  rightEncoder,   sensorQuadEncoder)
+#pragma config(Sensor, dgtl8,  leftEncoder,    sensorQuadEncoder)
+#pragma config(Sensor, dgtl10, lowerMobileGoalLimit, sensorTouch)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Sensor, I2C_2,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Sensor, I2C_4,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
@@ -47,29 +50,10 @@
 
 //Main competition background code...do not modify!
 #include "Vex_Competition_Includes.c"
-
-const short leftButton = 1;
-const short centerButton = 2;
-const short rightButton = 4;
-int autonomousModeSelect = 0;
+#include "autonomous1.c"
 
 
-//Wait for Press--------------------------------------------------
-void waitForPress()
-{
-  while(nLCDButtons == 0){}
-  wait1Msec(5);
-}
-//----------------------------------------------------------------
-
-//Wait for Release------------------------------------------------
-void waitForRelease()
-{
-  while(nLCDButtons != 0){}
-  wait1Msec(5);
-}
-//----------------------------------------------------------------
-
+int Program = 1;
 
 //bool mobileLowerIfTrue = true;
 
@@ -85,106 +69,99 @@ void waitForRelease()
 
 void pre_auton()
 {
-	// Set bStopTasksBetweenModes to false if you want to keep user created tasks
-	// running between Autonomous and Driver controlled modes. You will need to
-	// manage all user created tasks if set to false.
+
+	SensorValue[leftEncoder] =0;
+	SensorValue[rightEncoder] =0;
+
+	bDisplayCompetitionStatusOnLcd = false;
+	// Set bStopTasksBetweenModes to false if you want to keep user created tasks running between
+	// Autonomous and Tele-Op modes. You will need to manage all user created tasks if set to false.
 	bStopTasksBetweenModes = true;
+	//Leave this value alone
+	int lcdScreenMin = 1;
+	//This keeps track of which program you want to run
+	int lcdScreen = 1;
+	//Change this value to be the maximum number of programs you want on the robot
+	int lcdScreenMax = 2;
+	//Turns on the Backlight
+	bLCDBacklight = true;
 
-	// Set bDisplayCompetitionStatusOnLcd to false if you don't want the LCD
-	// used by the competition include file, for example, you might want
-	// to display your team name on the LCD in this function.
-		bDisplayCompetitionStatusOnLcd = false;
-	while(bIfiRobotDisabled){
-		//Clear LCD
-  clearLCDLine(0);
-  clearLCDLine(1);
-  //Declare count variable to keep track of our choice
-  int count = 0;
-  //Loop while center button is not pressed
-  while(nLCDButtons != centerButton)
-  {
-    //Switch case that allows the user to choose from 4 different options
-    switch(count){
-    case 0:
-      //Display first choice
-      displayLCDCenteredString(0, "Autonomous 1");
-      displayLCDCenteredString(1, "<     Enter    >");
-      waitForPress();
-      //Increment or decrement "count" based on button press
-      if(nLCDButtons == leftButton)
-      {
-        waitForRelease();
-        count = 3;
-      }
-      else if(nLCDButtons == rightButton)
-      {
-        waitForRelease();
-        count++;
-      }
-      break;
-    case 1:
-      //Display second choice
-      displayLCDCenteredString(0, "Autonomous 2");
-      displayLCDCenteredString(1, "<     Enter    >");
-      waitForPress();
-      //Increment or decrement "count" based on button press
-      if(nLCDButtons == leftButton)
-      {
-        waitForRelease();
-        count--;
-      }
-      else if(nLCDButtons == rightButton)
-      {
-        waitForRelease();
-        count++;
-      }
-      break;
-    default:
-      count = 0;
-      break;
-    }
-  }
-  //Clear LCD
-  clearLCDLine(0);
-  clearLCDLine(1);
+	//Copied from someone's sample code because the documentation for RobotC won't tell me anything useful
+	//These should logically work, but I'm not 100% sure
+	const short leftButton = 1;
+	const short centerButton = 2;
+	const short rightButton = 4;
 
-	 //Switch Case that actually runs the user choice
-  switch(count){
-  case 0:
-    //If count = 0, run the code correspoinding with choice 1
-    displayLCDCenteredString(0, "Autonomous 1");
-    displayLCDCenteredString(1, "Selected!");
-    wait1Msec(2000);                  // Robot waits for 2000 milliseconds
+	while (bIfiRobotDisabled == 1) { //Ensures this code will run ONLY when the robot is disabled
+		if (nLCDButtons == leftButton) { //Scrolls to the left
+			if (lcdScreenMin == lcdScreen) {
+				lcdScreen = lcdScreenMax;
+				wait1Msec(250);
+				} else {
+				lcdScreen --;
+				wait1Msec(250);
+			}
+		}
+		if (nLCDButtons == rightButton) { //Scrolls to the right
+			if (lcdScreenMax == lcdScreen) {
+				lcdScreen = lcdScreenMin;
+				wait1Msec(250);
+				} else {
+				lcdScreen++;
+				wait1Msec(250);
+			}
+		}
+		if (lcdScreen == 1 && Program != 1) {
+			displayLCDCenteredString (0, "Program"); //Name the first program here
+			displayLCDCenteredString (1, "1"); //Name the first program here
+			if (nLCDButtons == centerButton) {
+				Program = lcdScreen; //Sets the Program to the one on-screen
+				displayLCDCenteredString (0, "Autonomous Has");
+				displayLCDCenteredString (1, "Been Selected!");
+				wait1Msec(1500);
+			}
+			} else if (lcdScreen == 1 && Program == 1) {
+			displayLCDCenteredString (0, "Program"); //We use brackets to mark which program we have chosen
+			displayLCDCenteredString (1, "[1]"); //So that while we're scrolling, we can have one marked
+			} else if (lcdScreen == 2 && Program != 2) {
+			displayLCDCenteredString (0, "Program"); //Name the second program here
+			displayLCDCenteredString (1, "2"); //Name the second program here
+			if (nLCDButtons == centerButton) {
+				Program = lcdScreen; //Sets the Program to the one on-screen
+				displayLCDCenteredString (0, "Autonomous Has");
+				displayLCDCenteredString (1, "Been Selected!");
+				wait1Msec(1500);
+			}
+			} else if (lcdScreen == 2 && Program == 2) {
+			displayLCDCenteredString (0, "Program"); //We use brackets to mark which program we have chosen
+			displayLCDCenteredString (1, "[2]"); //So that while we're scrolling, we can have one marked
+			} else if (lcdScreen == 3 && Program != 3) {
+			displayLCDCenteredString (0, "Program"); //Name the third program here
+			displayLCDCenteredString (1, "3"); //Name the third program here
+			if (nLCDButtons == centerButton) {
+				Program = lcdScreen; //Sets the Program to the one on-screen
+				displayLCDCenteredString (0, "Autonomous Has");
+				displayLCDCenteredString (1, "Been Selected!");
+				wait1Msec(1500);
+			}
+			} else if (lcdScreen == 3 && Program == 3) {
+			displayLCDCenteredString (0, "Program"); //We use brackets to mark which program we have chosen
+			displayLCDCenteredString (1, "[3]"); //So that while we're scrolling, we can have one marked
+			} else if (lcdScreen == 4 && Program != 4) {
+			displayLCDCenteredString (0, "Program"); //Name the fourth program here
+			displayLCDCenteredString (1, "4"); //Name the fourth program here
+			if (nLCDButtons == centerButton) {
+				Program = lcdScreen; //Sets the Program to the one on-screen
+				displayLCDCenteredString (0, "Autonomous Has");
+				displayLCDCenteredString (1, "Been Selected!");
+				wait1Msec(1500);
+			}
+			} else if (lcdScreen == 4 && Program == 4) {
+			displayLCDCenteredString (0, "Program"); //We use brackets to mark which program we have chosen
+			displayLCDCenteredString (1, "[4]"); //So that while we're scrolling, we can have one marked
+		}
+	}
 
-    //give user choice to th auton task
-
-    autonomousModeSelect = 0;
-
-    break;
-  case 1:
-    //If count = 1, run the code correspoinding with choice 2
-    displayLCDCenteredString(0, "Autonomous 2");
-    displayLCDCenteredString(1, "Selected!");
-    wait1Msec(2000);                  // Robot waits for 2000 milliseconds
-
-    //give user choice to the auton task
-
-   	autonomousModeSelect = 1;
-
-    wait1Msec(3000);                 // Robot runs previous code for 3000 milliseconds before moving on
-    break;
-  default:
-    displayLCDCenteredString(0, "No valid choice");
-    displayLCDCenteredString(1, "was made!");
-    break;
-  }
-
-	// All activities that occur before the competition starts
-	// Example: clearing encoders, setting servo positions, ...
-
-	resetMotorEncoder(driveTrainLeft);
-	resetMotorEncoder(driveTrainRight);
-}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -200,18 +177,10 @@ void pre_auton()
 task autonomous()
 {
 
-	//motor[port8] = 127;
-	//motor[port2] = 127;
-
-	waitUntil(SensorValue[mobleGoalHigher] == 1);
-	motor[port8] = 0;
-	motor[port2] = 0;
-	motor[liftMobileHigherLeft] = 127;
-	motor[liftMobileHigherRight] = 127;
-	wait(500);
-	motor[liftMobileHigherLeft] = 0;
-	motor[liftMobileHigherRight] = 0;
-	allMotorsOff();
+	if(Program == 1){
+		autonomous1();
+		}else if (Program == 2){
+	}
 
 
 
@@ -231,15 +200,14 @@ task usercontrol()
 {
 
 
-//logic variables
-SensorValue[extendLeft] = 1;
-SensorValue[extendRight] = 1;
+	//logic variables
+	SensorValue[extendLeft] = 1;
+	SensorValue[extendRight] = 1;
 
 
-bool coneGate = false;
-bool mobileForward = true;
-int highLiftPosition = 1;
-
+	bool coneGate = false;
+	bool mobileForward = true;
+	int highLiftPosition = 1;
 
 
 
@@ -249,18 +217,20 @@ int highLiftPosition = 1;
 	while (true)
 	{
 
+
+
 		/*
 		Drive
 		Calls driveFunctions program to change motor speeds
 		*/
 		if(mobileForward){
-				motor[port8] = vexRT[Ch3];
-				motor[port2] = vexRT[Ch2];
+			motor[port8] = vexRT[Ch3];
+			motor[port2] = vexRT[Ch2];
 		}
 		else{
 
-				motor[port8] = -(vexRT[Ch2]);
-				motor[port2] = -(vexRT[Ch3]);
+			motor[port8] = -(vexRT[Ch2]);
+			motor[port2] = -(vexRT[Ch3]);
 		}
 
 
@@ -277,31 +247,31 @@ int highLiftPosition = 1;
 
 		//low lift
 		if(vexRT[Btn8U]){
-				//goes up
+			//goes up
 
 			motor[liftMobileLowerLeft] = 127;
 			motor[liftMobileLowerRight] = 127;
 
 			/* potential code for moving lower moble goal up (NEEDS TARGET)
 			setMotorTarget(liftMobileLowerLeft, nEncoderCountTarget, 127, true);
-    	setMotorTarget(liftMobileLowerRight, nEncoderCountTarget, 127, true);
+			setMotorTarget(liftMobileLowerRight, nEncoderCountTarget, 127, true);
 			moveMotorTarget(liftMobileLowerLeft, nEncoderCountTarget, 127, true);
-    	moveMotorTarget(liftMobileLowerRight, nEncoderCountTarget, 127, true);
-    	*/
+			moveMotorTarget(liftMobileLowerRight, nEncoderCountTarget, 127, true);
+			*/
 
 			}else if(vexRT[Btn8R]){
-				//goes down
+			//goes down
 
-				motor[liftMobileLowerLeft] = -127;
-				motor[liftMobileLowerRight] = -127;
+			motor[liftMobileLowerLeft] = -127;
+			motor[liftMobileLowerRight] = -127;
 
 
 			/* potential code for moving lower moble goal down (NEEDS TARGET)
 			setMotorTarget(liftMobileLowerLeft, nEncoderCountTarget, -127, true);
-    	setMotorTarget(liftMobileLowerRight, nEncoderCountTarget, -127, true);
+			setMotorTarget(liftMobileLowerRight, nEncoderCountTarget, -127, true);
 			moveMotorTarget(liftMobileLowerLeft, nEncoderCountTarget, -127, true);
-    	moveMotorTarget(liftMobileLowerRight, nEncoderCountTarget, -127, true);
-    	*/
+			moveMotorTarget(liftMobileLowerRight, nEncoderCountTarget, -127, true);
+			*/
 
 
 			}else{
@@ -311,54 +281,63 @@ int highLiftPosition = 1;
 
 
 
-		//High lift  (NEEDS SENSOR VALUES)
+		//High lift
 		if(vexRT[Btn7U]){ //Hight state
 			//goes up
-			motor[liftMobileHigherLeft] = 127;
-			motor[liftMobileHigherRight] = 127;
 			highLiftPosition = 3;
-			if(SensorValue[liftAngleLeft] > 4095){
+			if(SensorValue[liftAngleLeft] > 4000){
 				motor[liftMobileHigherLeft] = 0;
-			}
-			if(SensorValue[liftAngleRight] < 910){
-				motor[liftMobileHigherRight] = 0;
-			}
-
-
-			}else if(vexRT[Btn7L] && highLiftPosition == 3){ //middle state going down
-				motor[liftMobileHigherLeft] = -127;
-				motor[liftMobileHigherRight] = -127;
-				highLiftPosition = 2;
-				if(SensorValue[liftAngleLeft] < 3743){
-					motor[liftMobileHigherLeft] = 0;
-				}
-				if(SensorValue[liftAngleRight] > 1955){
-					motor[liftMobileHigherRight] = 0;
-				}
-			}else if(vexRT[Btn7L] && highLiftPosition == 1){ //middle state going up
+				}else{
 				motor[liftMobileHigherLeft] = 127;
-				motor[liftMobileHigherRight] = 127;
-				highLiftPosition = 2;
-				if(SensorValue[liftAngleLeft] > 3743){
-					motor[liftMobileHigherLeft] = 0;
-				}
-				if(SensorValue[liftAngleRight] < 1955){
-					motor[liftMobileHigherRight] = 0;
-				}
-			}else if(vexRT[Btn7D]){
-				//goes down
-				motor[liftMobileHigherLeft] = -127;
-				motor[liftMobileHigherRight] = -127;
-				highLiftPosition = 1;
-				if(SensorValue[liftAngleLeft] < 2770){
-					motor[liftMobileHigherLeft] = 0;
-				}
-				if(SensorValue[liftAngleRight] > 2820){
-					motor[liftMobileHigherRight] = 0;
-				}
 			}
+			if(SensorValue[liftAngleRight] < 2000){
+				motor[liftMobileHigherRight] = 0;
+				}else{
+				motor[liftMobileHigherRight] = 127;
+			}
+		}
+		else if(vexRT[Btn7D]){
+			//goes down
+			highLiftPosition = 1;
+			if(SensorValue[liftAngleLeft] < 3000){
+				motor[liftMobileHigherLeft] = 0;
+				}else{
+				motor[liftMobileHigherLeft] = -127;
+			}
+			if(SensorValue[liftAngleRight] > 2200){
+				motor[liftMobileHigherRight] = 0;
+				}else{
+				motor[liftMobileHigherRight] = -127;
+			}
+			}else{
+			motor[liftMobileHigherRight] = 0;
+			motor[liftMobileHigherLeft] = 0;
+		}
 
+		/*
+		if(vexRT[Btn7L] && highLiftPosition == 3){ //middle state going down
+		motor[liftMobileHigherLeft] = -127;
+		motor[liftMobileHigherRight] = -127;
+		highLiftPosition = 2;
+		if(SensorValue[liftAngleLeft] < 3743){
+		motor[liftMobileHigherLeft] = 0;
+		}
+		if(SensorValue[liftAngleRight] > 1955){
+		motor[liftMobileHigherRight] = 0;
+		}
+		}else if(vexRT[Btn7L] && highLiftPosition == 1){ //middle state going up
+		motor[liftMobileHigherLeft] = 127;
+		motor[liftMobileHigherRight] = 127;
+		highLiftPosition = 2;
+		if(SensorValue[liftAngleLeft] > 3743){
+		motor[liftMobileHigherLeft] = 0;
+		}
+		if(SensorValue[liftAngleRight] < 1955){
+		motor[liftMobileHigherRight] = 0;
+		}
+		}
 
+		*/
 
 
 		if(vexRT[Btn8D] == 1 && coneGate == false){
@@ -378,10 +357,10 @@ int highLiftPosition = 1;
 			motor[liftConeLeft] = 127;
 			motor[liftConeRight] = 127;
 
-		}else if(vexRT[Btn5U]){
+			}else if(vexRT[Btn5U]){
 			motor[liftConeLeft]  = -127;
 			motor[liftConeRight] = -127;
-		}else{
+			}else{
 			motor[liftConeLeft]  = 0;
 			motor[liftConeRight] = 0;
 		}
@@ -391,9 +370,9 @@ int highLiftPosition = 1;
 		if(vexRT[Btn6U]){
 			motor[coneIntake] = 127;
 
-		}else if(vexRT[Btn6D]){
+			}else if(vexRT[Btn6D]){
 			motor[coneIntake]  = -127;
-		}else{
+			}else{
 			motor[coneIntake]  = 0;
 		}
 	}
