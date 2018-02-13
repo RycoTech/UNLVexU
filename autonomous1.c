@@ -55,20 +55,27 @@ void autonomous1(){
 
 		//45 degree turn left
 		//(left target, right target)
-		turnLeft(150, -150);
-		wait(100);
+
+
+		turnLeft(250, -250);
+		wait10Msec(100);
 
 			//go forward
 
-		strait(-500, -500);
-		wait(100);
+		strait(-425, -425);
+		wait10Msec(100);
 
 			//45 degree turn right
-		turnRight(-200, 200);
-		wait(100);
+		turnRight(-250, 250);
+		wait10Msec(100);
 
 			//go forward
-		strait(-100,-100);
-		wait(100);
+
+		motor[liftMobileHigherLeft] = -70;
+		motor[liftMobileHigherRight] = -72;
+		strait(-425,-425);
+		motor[liftMobileHigherLeft] = 0;
+		motor[liftMobileHigherRight] = 0;
+		wait10Msec(100);
 
 }

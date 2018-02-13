@@ -60,17 +60,20 @@ task leftBackwardEncoderTest(){
 
 
 void turnLeft(int leftTarget, int rightTarget){
+		displayLCDCenteredString(1, "turning");
+
 		//reset encoder results flag
-		bool rightEncoderReached = false;
-		bool leftEncoderReched = false;
+		rightEncoderReached = false;
+		leftEncoderReched = false;
 
 		//reset encoders
 		SensorValue[leftEncoder] = 0;
 		SensorValue[rightEncoder] = 0;
 
 		//set encoder targets
-		rightEncoderTarget = rightTarget;
 		leftEncoderTarget = leftTarget;
+		rightEncoderTarget = rightTarget;
+
 
 		//set motors in the proper direction
 		motor[driveTrainLeft] = -127;
@@ -78,8 +81,8 @@ void turnLeft(int leftTarget, int rightTarget){
 
 
 		//startEncoders for testing
-		startTask(rightBackwardEncoderTest);
-		startTask(leftForwardEncoderTest);
+		startTask(leftBackwardEncoderTest);
+		startTask(rightForwardEncoderTest);
 
 		//when the encoders return the results, then stop the tasks, and end the function
 		waitUntil(rightEncoderReached == true && leftEncoderReched == true);
@@ -91,24 +94,25 @@ void turnLeft(int leftTarget, int rightTarget){
 void turnRight(int leftTarget, int rightTarget){
 
 		//reset encoder results
-		bool rightEncoderReached = false;
-		bool leftEncoderReched = false;
+		rightEncoderReached = false;
+		leftEncoderReched = false;
 
 		//reset encoder values
 		SensorValue[leftEncoder] = 0;
 		SensorValue[rightEncoder] = 0;
 
 		//set encoder targets
-		rightEncoderTarget = rightTarget;
 		leftEncoderTarget = leftTarget;
+		rightEncoderTarget = rightTarget;
+
 
 		//set motors in proper direction
 		motor[driveTrainLeft] = 127;
 		motor[driveTrainRight] = -127;
 
 		//when the encoders return the results, then stop the tasks, and end the function
-		startTask(rightForwardEncoderTest);
-		startTask(leftBackwardEncoderTest);
+		startTask(leftForwardEncoderTest);
+		startTask(rightBackwardEncoderTest);
 		waitUntil(rightEncoderReached == true && leftEncoderReched == true);
 		stopTask(rightForwardEncoderTest);
 		stopTask(leftBackwardEncoderTest);
@@ -117,8 +121,8 @@ void turnRight(int leftTarget, int rightTarget){
 
 void strait(int leftTarget, int rightTarget){
 		//reset encoder results
-		bool rightEncoderReached = false;
-		bool leftEncoderReched = false;
+		rightEncoderReached = false;
+		leftEncoderReched = false;
 
 		//reset encoder values
 		SensorValue[leftEncoder] = 0;
